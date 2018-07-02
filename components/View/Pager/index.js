@@ -10,6 +10,7 @@ const propTypes = {
     activePage: PropTypes.number,
     className: PropTypes.string,
     itemsCount: PropTypes.number,
+    itemTitle: PropTypes.string,
     maxItemsPerPage: PropTypes.number,
     onPageClick: PropTypes.func.isRequired,
     totalCapacity: PropTypes.number,
@@ -24,6 +25,7 @@ const defaultProps = {
     className: '',
     itemsCount: 0,
     maxItemsPerPage: 10,
+    itemTitle: 'items',
     totalCapacity: 7,
     onItemsPerPageChange: () => {},
     options: [
@@ -194,6 +196,7 @@ export default class Pager extends React.PureComponent {
             className: classNameFromProps,
             itemsCount,
             maxItemsPerPage,
+            itemTitle,
             totalCapacity,
         } = this.props;
 
@@ -251,6 +254,9 @@ export default class Pager extends React.PureComponent {
                         </div>
                         <div className={styles.currentItemsEnd}>
                             { currentItemsEnd }
+                        </div>
+                        <div className={styles.itemTitle}>
+                            { itemTitle }
                         </div>
                         <div className={styles.of}>
                             { ofTitle }
