@@ -8,8 +8,8 @@
     overflow-y: auto;
 
     .empty {
+        @extend %empty-text;
         padding: $spacing-small-alt $spacing-small;
         text-align: center;
-        color: get-text-color($color-foreground, $color-text-disabled-on-light, $color-text-disabled-on-dark);
     }
 }
