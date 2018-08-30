@@ -1,17 +1,30 @@
 @import '../../../stylesheets/base';
 
 .taebul {
+    overflow: auto;
+
     .head {
-        display: flex;
+        display: inline-flex;
         border-bottom: $width-separator-medium solid $color-separator;
+        min-width: 100%;
+
+        .header {
+            flex-shrink: 0;
+        }
     }
 
     .body {
         padding: 0;
 
         .row {
-            display: flex;
+            display: inline-flex;
             border-bottom: $width-separator-thin solid $color-separator;
+            min-width: 100%;
+
+            .cell {
+                flex-shrink: 0;
+                padding: $spacing-small;
+            }
         }
     }
 }

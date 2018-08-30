@@ -7,6 +7,7 @@ import Cell from '../Cell';
 
 const propTypes = {
     className: PropTypes.string,
+    cellClassName: PropTypes.string,
     datum: PropTypes.object.isRequired, // eslint-disable-line react/forbid-prop-types
     datumKey: PropTypes.oneOfType([
         PropTypes.string,
@@ -18,6 +19,7 @@ const propTypes = {
 };
 
 const defaultProps = {
+    cellClassName: undefined,
     className: '',
     columns: [],
     datum: {},
@@ -33,6 +35,7 @@ export default class Row extends React.PureComponent {
             datum,
             datumKey,
             settings,
+            cellClassName,
         } = this.props;
 
         const {
@@ -48,6 +51,7 @@ export default class Row extends React.PureComponent {
             rendererParams: cellRendererParams,
             renderer: cellRenderer,
             settings,
+            className: cellClassName,
         };
     }
 

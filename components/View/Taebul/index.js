@@ -5,6 +5,7 @@ import ListView from '../List/ListView';
 
 import Header from './Header';
 import Row from './Row';
+
 import styles from './styles.scss';
 
 const propTypes = {
@@ -32,15 +33,19 @@ export default class Taebul extends React.PureComponent {
     static columnKeySelector = column => column.key;
 
     headerRendererParams = (columnKey, column) => {
-        const { data, settings } = this.props;
+        const {
+            data,
+            settings,
+        } = this.props;
+
         const {
             headerRenderer,
             headerRendererParams,
         } = column;
 
         return {
-            columnKey,
             column,
+            columnKey,
             data,
             renderer: headerRenderer,
             rendererParams: headerRendererParams,
@@ -49,12 +54,17 @@ export default class Taebul extends React.PureComponent {
     }
 
     rowRendererParams = (datumKey, datum) => {
-        const { columns, settings } = this.props;
+        const {
+            columns,
+            settings,
+        } = this.props;
+
         return {
-            datum,
-            datumKey,
+            cellClassName: styles.cell,
             columnKeySelector: Taebul.columnKeySelector,
             columns,
+            datum,
+            datumKey,
             settings,
         };
     }
@@ -79,6 +89,7 @@ export default class Taebul extends React.PureComponent {
                     keyExtractor={Taebul.columnKeySelector}
                     renderer={Header}
                     rendererParams={this.headerRendererParams}
+                    rendererClassName={styles.header}
                 />
                 <ListView
                     className={styles.body}
