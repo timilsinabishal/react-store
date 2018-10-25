@@ -56,18 +56,18 @@ export default elementType => (WrappedComponent) => {
         }
 
         calculateOnChange = memoize(onChange => onChange && (
-            (value, info) => {
+            (value, error, info) => {
                 const {
                     faramOutboundTransform,
                     value: oldValue, // eslint-disable-line react/prop-types
                 } = this.props;
 
                 if (!faramOutboundTransform) {
-                    onChange(value, info);
+                    onChange(value, error, info);
                     return;
                 }
 
-                onChange(faramOutboundTransform(value, oldValue), info);
+                onChange(faramOutboundTransform(value, oldValue), error, info);
             }))
 
         renderWrappedComponent = ({ api } = {}) => {

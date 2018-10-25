@@ -97,6 +97,7 @@ const handleSubmit = (value, schema, onValidationFailure, onValidationSuccess) =
 const memoizedComputeOutputs = memoize(computeOutputs);
 const handleChange = ({
     value,
+    error,
     info,
     onChange,
     computeSchema,
@@ -117,6 +118,7 @@ const handleChange = ({
         oldError,
         schema,
     );
+    // TODO: combine error with new Error
 
     onChange(newValue || emptyObject, newError || emptyObject, info);
 };
@@ -230,7 +232,7 @@ export default class Faram extends React.PureComponent {
         return false;
     }
 
-    handleFormChange = (value, info) => {
+    handleFormChange = (value, error, info) => {
         const {
             onChange,
             computeSchema,
@@ -241,6 +243,7 @@ export default class Faram extends React.PureComponent {
 
         handleChange({
             value,
+            error,
             info,
             onChange,
             computeSchema,

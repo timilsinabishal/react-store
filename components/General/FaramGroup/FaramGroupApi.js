@@ -74,13 +74,13 @@ export default class FaramGroupApi extends FormElementApi {
     setProps = (props) => {
         this.props = {
             ...props,
-            onChange: (value, info) => {
+            onChange: (value, error, info) => {
                 // NOTE: Save these values in this.props so that above
                 // destructuring keeps working before setProps is
                 // again called.
                 this.props.value = value;
 
-                props.onChange(value, info);
+                props.onChange(value, error, info);
             },
         };
     }
@@ -109,6 +109,11 @@ export default class FaramGroupApi extends FormElementApi {
         [key]: newValue,
     })
     // helper for getOnChange
+    getNewError = (key, oldError, newError) => ({
+        ...oldError,
+        [key]: newError,
+    })
+    // helper for getOnChange
     getNewInfo = (key, value, info, infoFromProps) => {
         const faramElementName = (info && info.faramElementName) || [];
         const firstRun = faramElementName.length === 0;
@@ -133,7 +138,7 @@ export default class FaramGroupApi extends FormElementApi {
             return this.onChangeMemory[faramElementName];
         }
 
-        const newOnChange = (value, info) => {
+        const newOnChange = (value, error, info) => {
             if (!this.props.onChange) {
                 return;
             }
@@ -143,13 +148,19 @@ export default class FaramGroupApi extends FormElementApi {
                 this.props.value,
                 value,
             );
+            const newError = this.getNewError(
+                faramElementName,
+                this.props.error,
+                error,
+            );
+
             const newInfo = this.getNewInfo(
                 faramElementName,
                 value,
                 info,
                 faramInfo,
             );
-            this.props.onChange(newValue, newInfo);
+            this.props.onChange(newValue, newError, newInfo);
         };
         this.onChangeMemory[faramElementName] = newOnChange;
         return newOnChange;
