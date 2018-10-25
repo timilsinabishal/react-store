@@ -55,8 +55,6 @@ const propTypes = {
         PropTypes.string,
         PropTypes.number,
     ]),
-
-    name: PropTypes.string.isRequired,
 };
 
 const defaultProps = {
@@ -69,8 +67,8 @@ const defaultProps = {
     onChange: undefined,
     required: false,
     showLabel: true,
-    keySelector: d => d,
-    labelSelector: d => d,
+    keySelector: d => d.key,
+    labelSelector: d => d.label,
     showHintAndError: true,
     value: '',
     options: [],
@@ -127,7 +125,6 @@ class SegmentInput extends React.PureComponent {
         id: this.props.keySelector(data),
         selected: this.props.value,
         onChange: this.handleInputChange,
-        name: this.props.name,
         checked: this.props.value === key,
         error: this.props.error,
         readOnly: this.props.readOnly,

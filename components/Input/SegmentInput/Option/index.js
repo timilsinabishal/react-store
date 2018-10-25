@@ -12,7 +12,6 @@ const propTypes = {
     onChange: PropTypes.func.isRequired,
     checked: PropTypes.bool.isRequired,
     label: PropTypes.string.isRequired,
-    name: PropTypes.string.isRequired,
     error: PropTypes.string,
     disabled: PropTypes.bool,
     readOnly: PropTypes.bool,
@@ -72,7 +71,6 @@ export default class SegmentOption extends React.PureComponent {
             onChange,
             checked,
             label,
-            name,
         } = this.props;
 
         const classNames = this.getClassName();
@@ -89,7 +87,6 @@ export default class SegmentOption extends React.PureComponent {
                     checked={checked}
                     id={this.inputId}
                     value={id}
-                    name={name}
                 />
                 {label}
             </label>
