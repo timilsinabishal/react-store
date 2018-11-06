@@ -1,0 +1,23 @@
+@import '../../../stylesheets/base';
+
+.taebul {
+    display: flex;
+    flex-direction: column;
+
+    .head {
+        display: flex;
+        flex-shrink: 0;
+        border-bottom: $width-separator-medium solid $color-separator;
+    }
+
+    .body {
+        flex-grow: 1;
+        padding: 0;
+        overflow-y: scroll;
+
+        .row {
+            display: flex;
+            border-bottom: $width-separator-thin solid $color-separator;
+        }
+    }
+}
