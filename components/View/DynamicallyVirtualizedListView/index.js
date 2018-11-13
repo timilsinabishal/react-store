@@ -17,7 +17,7 @@ const propTypes = {
     className: PropTypes.string,
     data: propTypeData,
 
-    keyExtractor: PropTypes.func,
+    keySelector: PropTypes.func,
     modifier: PropTypes.func,
 
     renderer: PropTypes.func,
@@ -33,7 +33,7 @@ const defaultProps = {
     className: '',
     data: [],
     modifier: undefined,
-    keyExtractor: undefined,
+    keySelector: undefined,
     renderer: undefined,
     rendererClassName: '',
     rendererParams: undefined,
@@ -65,16 +65,27 @@ export default class DynamicallyVirtualizedListView extends React.Component {
 
         this.itemHeights = {};
         this.containerRef = React.createRef();
-        this.ignoreScrollEvent = false;
+
+        this.defaultItemHeight = this.props.defaultItemHeight;
     }
 
     componentDidMount() {
         window.addEventListener('scroll', this.handleScroll, true);
-        const { changed, containerHeight } = this.calculateContainerHeight();
-        if (changed) {
-            // eslint-disable-next-line react/no-did-mount-set-state
-            this.setState({ containerHeight });
-        }
+
+        // NOTE: componentDidMount is called before the container is created
+        setTimeout(
+            () => {
+                const {
+                    changed,
+                    containerHeight,
+                } = this.calculateContainerHeight();
+                if (changed) {
+                    // eslint-disable-next-line react/no-did-mount-set-state
+                    this.setState({ containerHeight });
+                }
+            },
+            0,
+        );
     }
 
     componentWillUnmount() {
@@ -98,20 +109,16 @@ export default class DynamicallyVirtualizedListView extends React.Component {
     }
 
     handleScroll = (e) => {
+        // No need to handle scroll if container doesn't have height
         if (!this.state.containerHeight) {
             return;
         }
-
-        if (this.ignoreScrollEvent) {
-            this.ignoreScrollEvent = false;
-            return;
-        }
-
+        // No need to handle scroll if scroll is not for this container
         const { current: container } = this.containerRef;
         if (e.target !== container) {
             return;
         }
-
+        // No need to handle scroll if scroll has not changed
         const { scrollTop: newContainerScrollTop } = container;
         const { containerScrollTop } = this.state;
         if (containerScrollTop === newContainerScrollTop) {
@@ -130,108 +137,128 @@ export default class DynamicallyVirtualizedListView extends React.Component {
     renderItem = (datum, i) => {
         const {
             data,
-            keyExtractor,
-            modifier,
+            keySelector,
             renderer: Renderer,
             rendererClassName: rendererClassNameFromProps,
             rendererParams,
         } = this.props;
 
-        const key = (keyExtractor && keyExtractor(datum, i)) || datum;
+        const key = keySelector
+            ? keySelector(datum, i)
+            : datum;
 
-        if (modifier) {
-            return modifier(key, datum, i, data);
-        } else if (Renderer) {
-            const extraProps = rendererParams
-                ? rendererParams(key, datum, i, data)
-                : undefined;
-            const rendererClassName = `
-                ${rendererClassNameFromProps}
-                ${styles.item}
-            `;
-            return (
-                <Renderer
-                    className={rendererClassName}
-                    key={key}
-                    {...extraProps}
-                />
-            );
-        }
+        const extraProps = rendererParams
+            ? rendererParams(key, datum, i, data)
+            : undefined;
 
-        console.warn('Must provide either renderer or modifier');
-        return null;
+        const rendererClassName = `
+            ${rendererClassNameFromProps}
+            ${styles.item}
+        `;
+
+        return (
+            <Renderer
+                className={rendererClassName}
+                key={key}
+                {...extraProps}
+            />
+        );
     }
 
     renderItems = () => {
         const {
             data,
-            defaultItemHeight,
+            // defaultItemHeight,
         } = this.props;
         const { containerHeight } = this.state;
+        const { current: container } = this.containerRef;
 
+        // If there is no container height or no data, dont' render
         if (!containerHeight || data.length === 0) {
             return null;
         }
 
-        const { current: container } = this.containerRef;
-
-        this.ignoreScrollEvent = true;
-
-        const items = [];
-
+        // Render top virtual container
         let topVirtualContainerHeight = 0;
-        let renderStartIndex = 0;
+        let renderStartIndex = -1;
 
         for (let i = 0; i < data.length; i += 1) {
-            topVirtualContainerHeight += this.itemHeights[i] || defaultItemHeight;
-            if (topVirtualContainerHeight > container.scrollTop) {
-                topVirtualContainerHeight -= this.itemHeights[i] || defaultItemHeight;
-                renderStartIndex = i;
+            const newHeight = topVirtualContainerHeight + (
+                this.itemHeights[i] || this.defaultItemHeight
+            );
+            if (newHeight > container.scrollTop) {
                 break;
             }
+            topVirtualContainerHeight = newHeight;
+            renderStartIndex = i;
         }
-
-        items.push(
+        const topVirtualContainer = (
             <div
                 className={styles.virtualDiv}
                 key="virtualized-list-item-start-div"
                 style={{ height: `${topVirtualContainerHeight}px` }}
-            />,
+            />
         );
+        const offsetFromTopVirtualContainer = container.scrollTop - topVirtualContainerHeight;
 
+        // console.warn('Height of TVC', topVirtualContainerHeight);
 
-        let currentRenderHeight = topVirtualContainerHeight - container.scrollTop;
-        let lastRenderIndex;
+        // console.warn('Offset from TVC', offsetFromTopVirtualContainer);
 
-        // keep rendering until the container is filled up to end
+        // Keep rendering until the container is filled up to end
+        const visibleItems = [];
+        // currentRenderYposition is initially less than or equal to zero
+        let currentRenderYposition = topVirtualContainerHeight;
+        let renderEndIndex;
+        const maxRenderYposition = (
+            container.scrollTop + containerHeight + offsetFromTopVirtualContainer
+        );
         for (
-            let i = renderStartIndex;
-            currentRenderHeight < containerHeight && i < data.length;
+            let i = renderStartIndex + 1;
+            currentRenderYposition < maxRenderYposition && i < data.length;
             i += 1
         ) {
             const item = this.renderItem(data[i], i);
             const itemBCR = getRenderedBoundingClientRect(item, container);
             this.itemHeights[i] = itemBCR.height;
+            currentRenderYposition += this.itemHeights[i];
 
-            currentRenderHeight += this.itemHeights[i] || defaultItemHeight;
-            items.push(item);
-            lastRenderIndex = i;
+            visibleItems.push(item);
+            renderEndIndex = i;
         }
+        const offsetFromViewport = currentRenderYposition - containerHeight - container.scrollTop;
 
-        let bottomVirtualContainerHeight = 0;
-        for (let j = lastRenderIndex + 1; j < data.length; j += 1) {
-            bottomVirtualContainerHeight += this.itemHeights[j] || defaultItemHeight;
+        // console.warn('Offset from VP', offsetFromViewport);
+
+        // Render bottom virtual container
+        let bottomVirtualContainerHeight = -offsetFromViewport;
+        for (let i = renderEndIndex + 1; i < data.length; i += 1) {
+            bottomVirtualContainerHeight += this.itemHeights[i] || this.defaultItemHeight;
         }
-
-        items.push(
+        bottomVirtualContainerHeight = Math.max(0, bottomVirtualContainerHeight);
+        const bottomVirtualContainer = (
             <div
                 className={styles.virtualDiv}
                 key="virtualized-list-item-end-div"
                 style={{ height: `${bottomVirtualContainerHeight}px` }}
-            />,
+            />
         );
 
-        return items;
+        // console.warn('Height of BVC', bottomVirtualContainerHeight);
+
+        // console.warn('-----------');
+
+        const heights = Object.keys(this.itemHeights);
+        this.defaultItemHeight = heights.reduce(
+            (acc, key) => acc + heights[key],
+            0,
+        ) / heights.length;
+
+        return [
+            topVirtualContainer,
+            ...visibleItems,
+            bottomVirtualContainer,
+        ];
     }
 
     render() {
